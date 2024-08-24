@@ -106,7 +106,7 @@ You can save recordings as csv files for further analysis and training of the ne
 `~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation$ python SI_Toolkit_ASF/Run/Convert_Network_With_hls4ml.py` 
 
 
-HLS4ML folder will be created upon completion
+HLS4ML folder will be created upon completion: `~/cartpole/HLS4ML/`
 
 All vhdl files generated under
  
