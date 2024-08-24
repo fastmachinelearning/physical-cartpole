@@ -6,6 +6,8 @@ An env for users needs to created using the proper conda env file:
 User environments should also have
 `pip install watchdog pydot graphviz`
 
+Since the environment is set up, just do:
+`conda activate physical_cartpole`
 
 ## Step1: Model Generation:
 
