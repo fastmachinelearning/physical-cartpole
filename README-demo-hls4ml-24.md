@@ -192,150 +192,125 @@ Key Bindings:
 
 ## Step 6: Implementation
 
-### 6.1	
+1. Start Vivado2020.1 within folder  by `executing ~/vivado.2020.1
+  /physical-cartpole/FPGA/VivadoProjects$ ~/vivado.2020.1`
 
-Start Vivado2020.1 within folder  by `executing ~/vivado.2020.1
-/physical-cartpole/FPGA/VivadoProjects$ ~/vivado.2020.1`
+2.	Inside Vivado GUI: 
 
-### 6.2	
+    Go to Tools in top toolbar and choose “Run tcl script”
 
-Inside Vivado GUI: 
+                `Choose CartpoleDriverZynq_21_08_2024.tcl` and execute
 
-Go to Tools in top toolbar and choose “Run tcl script”
+                This script loads all files needed for implementation. When the script finishes
 
-             `Choose CartpoleDriverZynq_21_08_2024.tcl` and execute
+3. Execute Generate Bitstream
 
-             This script loads all files needed for implementation. When the script finishes
+4. After the conclusion of this step, click OK on the next dialog box
 
-### 6.3	
+5. Bitstream will be written and message “Bitstream Generation Successfully Completed” will be displayed
 
-Execute Generate Bitstream
+6. If you wish to observe the implementation layout on the FPGA, you can choose Open Implemented Design, otherwise choose Cancel
 
-### 6.4	
+7. Go to File –> Export -> Export Hardware [choose Platform Type as Fixed] click Next
 
-After the conclusion of this step, click OK on the next dialog box
+8. Choose Output as [Include Bitstream] click Next
 
-### 6.5	
+9. leave default choices and click Next
 
-Bitstream will be written and message “Bitstream Generation Successfully Completed” will be displayed
+10. Finish
 
-### 6.6	
+11. Close Vivado
 
-If you wish to observe the implementation layout on the FPGA, you can choose Open Implemented Design, otherwise choose Cancel
+12.  Navigate to `/physical-cartpole/Firmware$`
 
-### 6.7
+13. Execute `physical-cartpole/Firmware$ source /tools/Xilinx/Vitis/2020.1/settings64.sh`
 
-Go to File – Export - Export Hardware [choose Platform Type as Fixed] click Next
+14. Start Vitis 2020.1: `physical-cartpole/Firmware$` vitis
 
-### 6.8	
+15. In Select Workspace Directory dialog box create a new folder named VitisProjects under `physical-cartpole/Firmware/`
 
-Choose Output as [Include Bitstream] click Next
+16. Click Launch
 
-### 6.9
+17. In Vitis GUI: Create new Application Project
 
-leave default choices and click Next
+18. Choose Create New Platform from hardware (XSA) Tab
 
-### 6.10
-Finish
-
-### 6.11
-Close Vivado
-
-### 6.12
-Navigate to /physical-cartpole/Firmware$
-
-### 6.13	Execute 
-physical-cartpole/Firmware$ source /tools/Xilinx/Vitis/2020.1/settings64.sh
-
-### 6.14
-Start Vitis 2020.1: physical-cartpole/Firmware$ vitis
-
-### 6.15
-In Select Workspace Directory dialog box create a new folder named VitisProjects under physical-cartpole/Firmware/
-### 6.16
-Click Launch
-### 6.17
-In Vitis GUI: Create new Application Project
-### 6.18
-Choose Create New Platform from hardware (XSA) Tab
-### 6.19
-Navigate to:  
+19. Navigate to:  
 `physical-cartpole/FPGA/VivadoProjects/CartPoleDriverZynq/
 cartpole_driver_design_wrapper.xsa`
-### 6.20
-Click OK
-### 6.21
-Make sure the Generate Boot Components box is selected in this dialog box
-### 6.22
-Click Next
-### 6.23
-In the Application Project Details Box: 
-- enter CartPoleFirmware as Application Project Name
-- Choose ps7_cortexa9_0
-### 6.24
 
-Click Next
-### 6.25
-Click Next again
-### 6.26
-Click Finish
-### 6.27
-A new project window opens
-### 6.28
-Expand src folder
-### 6.29
-Delete all .c and .h files
-### 6.30
-Return to terminal
-### 6.31
-Uncomment reference to zynq implementation  for cartpole firmware in the create_symlinks.sh file
-### 6.32
-Execute `physical-cartpole/Firmware/./create_symlinks.sh`
-### 6.33
-You can go back to Vitis project window and observe the src folder being populated with several new files
-### 6.34	
-Under src open parameters.c and edit as follows
-### 6.35	
-[these values are specific to the cartpole hardware] Line 52: float MOTOR_CORRECTION[3] = {0.6310468, 0.0472680, 0.0408973};
-### 6.36	
-Line 54: float ANGLE_HANGING_POLOLU = 783.0; 
-### 6.37	
-Save `parameters.c`
-### 6.38	
-Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and C/C++ Build Settings
-### 6.39	
-In the box at the center choose Libraries
-### 6.40	
-In the Libraries pane click on the + sign
-### 6.41	
-Enter m in the Enter Value Box
-### 6.42	
-Choose Apply and Close
-### 6.43	
-Each time a new model is built do the following:
+20. Click OK
 
-Replace the in and out vector normalizations in neural-imitator.c values with the data from
-`test1/physicalcartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment_14/Models/`
-[Use the name of model folder used]
+21. Make sure the Generate Boot Components box is selected in this dialog box
 
-These are the values we used in our case:
+22. Click Next
 
-```float hls_normalize_a[] = {0.05600862,1.00000000,1.00000000,5.20657063,0.88941061,1.00000000,5.05586720};
-float hls_normalize_b[] = {0.02947879,0.00000000,0.00000000,0.01642668,0.00083601,0.00000000,0.00045502};
-float hls_denormalize_A[] = {1.0};
-float hls_denormalize_B[] = {0.0};
-```
+23. In the Application Project Details Box: 
+  - enter CartPoleFirmware as Application Project Name
+  - Choose ps7_cortexa9_0
 
-Similarly, in neural-imitator.h update model input output size if new model is sized differently or has different precision.
+24. Click Next
 
-### 6.44	
-Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and choose Build Project
-### 6.45	
-Right Click on CartPoleFirmware[cartpole_driver_design_wrapper] and choose Create Boot Image
-### 6.46	
-Leave default settings and Create Image
-### 6.47	
-Retrieve the .bin file from the path displayed to load on an SD card and program FPGA with it
+25. Click Next again
+
+26. Click Finish
+
+27. A new project window opens
+
+28. Expand src folder
+
+29. Delete all .c and .h files
+
+30. Return to terminal
+
+31. Uncomment reference to zynq implementation for cartpole firmware in the `create_symlinks.sh` file
+
+32. Execute `physical-cartpole/Firmware/./create_symlinks.sh`
+
+33. You can go back to Vitis project window and observe the src folder being populated with several new files
+
+34. Under src open `parameters.c` and edit as follows
+
+35. [these values are specific to the cartpole hardware] 
+  `Line 52: float MOTOR_CORRECTION[3] = {0.6310468, 0.0472680, 0.0408973};`
+
+36. `Line 54: float ANGLE_HANGING_POLOLU = 783.0; `
+
+37. Save `parameters.c`
+
+38.	Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and C/C++ Build Settings
+
+39. In the box at the center choose Libraries
+
+40. In the Libraries pane click on the + sign
+
+41. Enter m in the Enter Value Box
+
+42. Choose Apply and Close
+
+43. Each time a new model is built do the following:
+
+      Replace the in and out vector normalizations in neural-imitator.c values with the data from
+      `test1/physicalcartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment_14/Models/`
+      [Use the name of model folder used]
+
+      These are the values we used in our case:
+
+      ```float hls_normalize_a[] = {0.05600862,1.00000000,1.00000000,5.20657063,0.88941061,1.00000000,5.05586720};
+      float hls_normalize_b[] = {0.02947879,0.00000000,0.00000000,0.01642668,0.00083601,0.00000000,0.00045502};
+      float hls_denormalize_A[] = {1.0};
+      float hls_denormalize_B[] = {0.0};
+      ```
+
+      Similarly, in neural-imitator.h update model input output size if new model is sized differently or has different precision.
+
+44. Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and choose Build Project
+
+45. Right Click on CartPoleFirmware[cartpole_driver_design_wrapper] and choose Create Boot Image
+
+46. Leave default settings and Create Image
+
+47. Retrieve the .bin file from the path displayed to load on an SD card and program FPGA with it
 
 ## Step7
 
