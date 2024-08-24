@@ -1,16 +1,21 @@
 # Instructions
 
-An env for users needs to created using the proper conda env file: 
-`[conda create -n physical_cartpole python=3.9]`
+Change directory:
+`cd ~/cartpole/common/physical-cartpole`
 
-User environments should also have
-`pip install watchdog pydot graphviz`
+Create conda environment with proper python version:
+`conda create -n physical_cartpole python=3.9`
 
-Since the environment is set up, just do:
+Activate the environment after creating it:
 `conda activate physical_cartpole`
 
-Run: `cd ~/cartpole/common/physical-cartpole`
+Install packages:
+`pip install -r requirements.txt`
 
+Install additional packages:
+`pip install watchdog pydot graphviz`
+
+Bravo! Environment is ready to use!
 
 ## Step1: Model Generation:
 
