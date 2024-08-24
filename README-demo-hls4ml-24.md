@@ -95,7 +95,7 @@ You can save recordings as csv files for further analysis and training of the ne
 
 ## Step 4: Conversion of neural network controller through hls4ml
 
-1.	Edit `config_hls4ml.yml` to do the following:
+1.	Edit `~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/config_hls.yml` to do the following:
     - Point to correct Vivado path
     - Point to correct Model folder
     - Correct Model name
