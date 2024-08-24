@@ -1,6 +1,6 @@
 # Instructions
 
-## Step 0: Environment Setup
+## Step 1: Environment Setup
 
 Change directory:
 `cd ~/cartpole/common/physical-cartpole`
@@ -23,7 +23,7 @@ Install additional packages:
 Bravo! Environment is ready to use!
 
 
-## Step 1: Training Neural Network Controller
+## Step 2: Training Neural Network Controller
 
 1. Preparing the training data:
     
@@ -71,18 +71,29 @@ A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/E
 
 
 
-## Step2: Cartpole simulator: 
-You can visualize the 
+## Step 3: Cartpole simulator
 
-1.	[in the physical_cartpole directory] conda activate physical_cartpole
+You can visualize the functioning of the controller using the cartpole simulator GUI.
 
-2.	 [need to be in physical_cartpole folder same level as requirements.txt]    <br>`pip install -r requirements.txt`
+1. Change directory: `cd ~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation`
 
-3.	`[in folder ./Driver/CartpoleSimulation]` execute `python run_ cartpole_gui.py`
+2. Open the controllers configuration file: `vim Control_Toolkit_ASF/config_controllers.yml`
 
-4.	Use GUI to experiment with different settings and save recordings as svc as data
+3. In the configuration file, under "neural-imitator" section, set the follwing parameters:
+    ```
+    PATH_TO_MODELS: './SI_Toolkit_ASF/Experiments/Experiment-14/Models/'
+    net_name: 'Your_model_name'  # TF
+    Input_precision = 'float'
+    hls4ml = False
+    ```
+   Save and close the file.
 
-## Step4: Conversion of Model through hls4ml
+4. In folder ./Driver/CartpoleSimulation execute `python run_cartpole_gui.py`
+
+5. Use GUI to experiment with different settings.
+You can save recordings as csv files for further analysis and training of the neural network controllers.
+
+## Step 4: Conversion of neural network controller through hls4ml
 
 1.	Edit `config_hls4ml.yml` to do the following:
     - Point to correct Vivado path
