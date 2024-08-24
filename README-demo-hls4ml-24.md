@@ -11,8 +11,6 @@ Since the environment is set up, just do:
 
 ## Step1: Model Generation:
 
-`physical_cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Trial_14__17_08_2024/Models`
-
 1.	[already done on our server] Create Directory named Experiments under` ../ CartPoleSimulation/SI_Toolkit_ASF`
 
 2.	[already done on our server] Place Training Data folder `Experiments-14` under `Experiments` 
