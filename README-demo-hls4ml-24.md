@@ -1,9 +1,6 @@
 # Instructions
 
-## Step 0: Environment Setup:
-
-
-## Step 0: Environment Setup:
+## Step 0: Environment Setup
 
 Change directory:
 `cd ~/cartpole/common/physical-cartpole`
@@ -26,7 +23,7 @@ Install additional packages:
 Bravo! Environment is ready to use!
 
 
-## Step1: Model Generation:
+## Step 1: Training Neural Network Controller
 
 CartpoleSimlation path: `cd ~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation`
 
@@ -58,7 +55,7 @@ Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSi
 
 
 ## Step2: Cartpole simulator: 
-
+You can visualize the 
 
 1.	[in the physical_cartpole directory] conda activate physical_cartpole
 
