@@ -28,19 +28,18 @@ Important paths to set correctly:
     - PATH_TO_EXPERIMENT_FOLDERS: `./SI_Toolkit_ASF/Experiments/`
 
 4.	[already done on our server]  Navigate to:
-`~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
+`./SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
 edit configuration of this .py to make working directory CartPoleSimulation
 
-5.	Execute python `A1_Create_Normalization_File.py` from the `CartPoleSimulation` directory: <br> 
-`python SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`
+5.	Execute python A1_Create_Normalization_File.py from the `CartPoleSimulation` directory: <br> 
+`python ./SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`
 
-7.	[already done on our server] Navigate to `../CartPoleSimulation/SI_Toolkit_ASF/Run/A2_Train_Network.py` <br>
+7.	[already done on our server] Navigate to `./SI_Toolkit_ASF/Run/A2_Train_Network.py` <br>
 Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSimulation
 
 8.	Execute python `A2_Train_Network.py` <br>
-`python SI_Toolkit_ASF/Run/A2_Train_Network.py`<br>
-  A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14/Models directory`
-
+`python ./SI_Toolkit_ASF/Run/A2_Train_Network.py`<br>
+  A newly created model is added into the: `./SI_Toolkit_ASF/Experiments/Experiment-14/Models` directory
 
 
 ## Step2: Cartpole simulator: 
