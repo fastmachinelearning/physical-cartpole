@@ -1,5 +1,7 @@
 # Instructions
 
+## Step 0: Environment Setup:
+
 Change directory:
 `cd ~/cartpole/common/physical-cartpole`
 
@@ -16,6 +18,7 @@ Install additional packages:
 `pip install watchdog pydot graphviz`
 
 Bravo! Environment is ready to use!
+
 
 ## Step1: Model Generation:
 
