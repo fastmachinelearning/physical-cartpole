@@ -239,6 +239,10 @@ Key Bindings:
 
 ## Step 6: Implementation
 
+There are two parts to the system implementation: 1) generating the NN model bit stream and 2) generating the full Zynq SoC project including board interfaces.
+
+### Generating the FPGA bit file (executable)
+
 1. Start Vivado2020.1 within folder  by `executing ~/vivado.2020.1
   /physical-cartpole/FPGA/VivadoProjects$ ~/vivado.2020.1`
 
@@ -273,6 +277,8 @@ Key Bindings:
 11. Finish
 
 12. Close Vivado
+
+### Generating the SoC project
 
 13.  Navigate to `/physical-cartpole/Firmware$`
 
