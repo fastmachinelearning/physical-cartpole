@@ -1,7 +1,5 @@
 # Instructions
 
-[[_TOC_]]
-
 ## Step 1: Environment Setup
 
 Change directory:
