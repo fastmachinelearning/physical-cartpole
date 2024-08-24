@@ -232,56 +232,62 @@ Key Bindings:
   /physical-cartpole/FPGA/VivadoProjects$ ~/vivado.2020.1`
 
 2.	Inside Vivado GUI: 
-
+   
     Go to Tools in top toolbar and choose “Run tcl script”
+  	            Before running the tcl file, update the board file definition on physical-cartpole/FPGA/VivadoProjects/CartpoleDriverZynq_21_08_2024.tcl Line 94:
+  	Replace line 94 with this line (only "part0:1.1" has been changed to "part0:1.0"):
+  	
+  	'set_property -name "board_part" -value "digilentinc.com:zybo-z7-20:part0:1.0" -objects $obj'
+
+  	and save.
 
                 `Choose CartpoleDriverZynq_21_08_2024.tcl` and execute
 
                 This script loads all files needed for implementation. When the script finishes
 
-3. Execute Generate Bitstream
+4. Execute Generate Bitstream
 
-4. After the conclusion of this step, click OK on the next dialog box
+5. After the conclusion of this step, click OK on the next dialog box
 
-5. Bitstream will be written and message “Bitstream Generation Successfully Completed” will be displayed
+6. Bitstream will be written and message “Bitstream Generation Successfully Completed” will be displayed
 
-6. If you wish to observe the implementation layout on the FPGA, you can choose Open Implemented Design, otherwise choose Cancel
+7. If you wish to observe the implementation layout on the FPGA, you can choose Open Implemented Design, otherwise choose Cancel
 
-7. Go to File –> Export -> Export Hardware [choose Platform Type as Fixed] click Next
+8. Go to File –> Export -> Export Hardware [choose Platform Type as Fixed] click Next
 
-8. Choose Output as [Include Bitstream] click Next
+9. Choose Output as [Include Bitstream] click Next
 
-9. leave default choices and click Next
+10. leave default choices and click Next
 
-10. Finish
+11. Finish
 
-11. Close Vivado
+12. Close Vivado
 
-12.  Navigate to `/physical-cartpole/Firmware$`
+13.  Navigate to `/physical-cartpole/Firmware$`
 
-13. Execute `physical-cartpole/Firmware$ source /tools/Xilinx/Vitis/2020.1/settings64.sh`
+14. Execute `physical-cartpole/Firmware$ source /tools/Xilinx/Vitis/2020.1/settings64.sh`
 
-14. Start Vitis 2020.1: `physical-cartpole/Firmware$` vitis
+15. Start Vitis 2020.1: `physical-cartpole/Firmware$` vitis
 
-15. In Select Workspace Directory dialog box create a new folder named VitisProjects under `physical-cartpole/Firmware/`
+16. In Select Workspace Directory dialog box create a new folder named VitisProjects under `physical-cartpole/Firmware/`
 
-16. Click Launch
+17. Click Launch
 
-17. In Vitis GUI: Create new Application Project
+18. In Vitis GUI: Create new Application Project
 
-18. Choose Create New Platform from hardware (XSA) Tab
+19. Choose Create New Platform from hardware (XSA) Tab
 
-19. Navigate to:  
+20. Navigate to:  
 `physical-cartpole/FPGA/VivadoProjects/CartPoleDriverZynq/
 cartpole_driver_design_wrapper.xsa`
 
-20. Click OK
+21. Click OK
 
-21. Make sure the Generate Boot Components box is selected in this dialog box
+22. Make sure the Generate Boot Components box is selected in this dialog box
 
-22. Click Next
+23. Click Next
 
-23. In the Application Project Details Box: 
+24. In the Application Project Details Box: 
   - enter CartPoleFirmware as Application Project Name
   - Choose ps7_cortexa9_0
 
