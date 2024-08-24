@@ -9,21 +9,26 @@ User environments should also have
 Since the environment is set up, just do:
 `conda activate physical_cartpole`
 
+Run: `cd ~/cartpole/common/physical-cartpole`
+
+
 ## Step1: Model Generation:
 
-1.	[already done on our server] Create Directory named Experiments under` ../ CartPoleSimulation/SI_Toolkit_ASF`
+CartpoleSimlation path: `cd ~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation`
 
-2.	[already done on our server] Place Training Data folder `Experiments-14` under `Experiments` 
+1.	[already done on our server] Create Directory named Experiments under `./SI_Toolkit_ASF`
 
-3.	Edit in .yml file `/CartPoleSimulation/SI_Toolkit_ASF/config_training.yml`: 
+2.	[already done on our server] Place Training Data folder `Experiment-14` under `./SI_Toolkit_ASF/Experiments` 
+
+3.	Edit in .yml file `./SI_Toolkit_ASF/config_training.yml`: 
 
 Important paths to set correctly:
 
-    - path_to_experiment: ‘Experiments-14’
+    - path_to_experiment: ‘Experiment-14’
     - PATH_TO_EXPERIMENT_FOLDERS: `./SI_Toolkit_ASF/Experiments/`
 
 4.	[already done on our server]  Navigate to:
-`../CartPoleSimulation/SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
+`~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
 edit configuration of this .py to make working directory CartPoleSimulation
 
 5.	Execute python `A1_Create_Normalization_File.py` from the `CartPoleSimulation` directory: <br> 
@@ -34,7 +39,7 @@ Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSi
 
 8.	Execute python `A2_Train_Network.py` <br>
 `python SI_Toolkit_ASF/Run/A2_Train_Network.py`<br>
-  A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiments-14/Models directory`
+  A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14/Models directory`
 
 
 
@@ -141,7 +146,7 @@ ls /dev/tty.* (from any directory), making sure the FPGA is connected to the com
 
 Match the model name and Model paths:
 
-`PATH_TO_MODELS: './CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiments-14 /Models/'`
+`PATH_TO_MODELS: './CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14 /Models/'`
 
 `net_name: 'Dense-7IN-32H1-32H2-1OUT-0'  # TF`
 
@@ -291,7 +296,7 @@ cartpole_driver_design_wrapper.xsa`
 43. Each time a new model is built do the following:
 
       Replace the in and out vector normalizations in neural-imitator.c values with the data from
-      `test1/physicalcartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiments-14/Models/`
+      `test1/physicalcartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14/Models/`
       [Use the name of model folder used]
 
       These are the values we used in our case:
