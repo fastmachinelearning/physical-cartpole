@@ -84,6 +84,9 @@ All vhdl files generated under
  
 `./HLS4ML/d3232_12_2_v0/myproject_prj/solution1/impl/vhdl` need to be transferred into the **Vivado Project in Step 6**.
 
+3. HLS4ML folder will be created upon completion <br>
+   Take a note of all vhdl files generated under `./HLS4ML/d3232_12_2_v0/myproject_prj/solution1/impl/vhdl`. <br>
+   To import these files into the Vivado project, after step 6.2, open sources and select all .vhd files and remove them from project. These are the files of the         previously trained model. Then select their parent folder and right click and select "Add sources," and add all of the new .vhd files generated.
 
 
 
