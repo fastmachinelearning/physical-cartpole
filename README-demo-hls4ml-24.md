@@ -26,12 +26,14 @@ Important paths to set correctly:
 `../CartPoleSimulation/SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
 edit configuration of this .py to make working directory CartPoleSimulation
 
-5.	Execute python `A1_Create_Normalization_File.py`
+5.	Execute python `A1_Create_Normalization_File.py` from the `CartPoleSimulation` directory: 
+`python SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`
 
-6.	[already done on our server] Navigate to `../CartPoleSimulation/SI_Toolkit_ASF/Run/A2_Train_Network.py` <br>
+7.	[already done on our server] Navigate to `../CartPoleSimulation/SI_Toolkit_ASF/Run/A2_Train_Network.py` <br>
 Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSimulation
 
-7.	Execute python `A2_Train_Network.py` <br>
+8.	Execute python `A2_Train_Network.py` <be>
+`python SI_Toolkit_ASF/Run/A2_Train_Network.py`
   A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiments-14/Models directory`
 
 
