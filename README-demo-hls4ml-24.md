@@ -33,7 +33,7 @@ edit configuration of this .py to make working directory CartPoleSimulation
 Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSimulation
 
 8.	Execute python `A2_Train_Network.py` <br>
-`python SI_Toolkit_ASF/Run/A2_Train_Network.py`
+`python SI_Toolkit_ASF/Run/A2_Train_Network.py`<br>
   A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiments-14/Models directory`
 
 
