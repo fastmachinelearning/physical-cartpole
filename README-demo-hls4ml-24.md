@@ -17,7 +17,7 @@ Since the environment is set up, just do:
 
 2.	[already done on our server] Place Training Data folder `Experiment_14` under `Experiments` 
 
-3.	[already done on our server] Edit in .yml file `/CartPoleSimulation/SI_Toolkit_ASF/config_training.yml`: 
+3.	Edit in .yml file `/CartPoleSimulation/SI_Toolkit_ASF/config_training.yml`: 
 
 Important paths to set correctly:
 
