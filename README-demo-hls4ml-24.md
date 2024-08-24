@@ -2,6 +2,9 @@
 
 ## Step 0: Environment Setup:
 
+
+## Step 0: Environment Setup:
+
 Change directory:
 `cd ~/cartpole/common/physical-cartpole`
 
@@ -10,6 +13,9 @@ Create conda environment with proper python version:
 
 Activate the environment after creating it:
 `conda activate physical_cartpole`
+
+**Remember to activate the environment each time you start new terminal tab or window.**
+
 
 Install packages:
 `pip install -r requirements.txt`
