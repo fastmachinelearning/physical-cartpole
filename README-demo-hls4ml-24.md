@@ -1,120 +1,214 @@
 # Instructions
 
+
 ## Step 1: Environment Setup
 
-Change directory:
-`cd ~/cartpole/common/physical-cartpole`
+### Clone the Github repository
+To clone the repository along with its submodules, use the SSH URL:
 
-Create conda environment with proper python version:
-`conda create -n physical_cartpole python=3.9`
+```bash
+git clone --recurse-submodules git@github.com:fastmachinelearning/physical-cartpole.git && cd physical-cartpole
+```
 
-Activate the environment after creating it:
-`conda activate physical_cartpole`
+**Note**: Using SSH is required because the submodules are cloned using SSH. If you don't have SSH configured, the submodule cloning will fail. 
 
-**Remember to activate the environment each time you start new terminal tab or window.**
+If you need to run this code on a remote server where SSH is not available, you should first clone the repository locally using the SSH command. Once the repository is cloned locally, you can transfer it to the remote server using `scp`:
 
 
-Install packages:
-`pip install -r requirements.txt`
+```bash
+scp -r /path/to/local/physical-cartpole username@remote-server:/path/to/destination/
+```
 
-Install additional packages:
-`pip install watchdog pydot graphviz`
+Replace `/path/to/local/physical-cartpole` with the path to your local repository, `username@remote-server` with your remote server's username and address, and `/path/to/destination/` with the path where you want to place the repository on the server.
 
-Bravo! Environment is ready to use!
+
+### Conda Environment
+
+To set up the project environment using Conda, follow these steps:
+
+1. **Install Conda**: If you don't have Conda installed, you can find instructions on how to set it up at the [Conda Installation Guide](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
+
+
+2. **Create Conda Environment**
+
+   ```bash
+   conda create -n physical_cartpole python=3.9
+   ```
+
+3. **Activate Conda Environment**
+
+   ```bash
+   conda activate physical_cartpole
+   ```
+
+   **Remember to activate the environment each time you start a new terminal tab or window.**
+
+
+
+4. **Install Packages from `requirements.txt`**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Install Additional Packages**
+
+   ```bash
+   pip install watchdog pydot graphviz PyQt6
+   ```
+
+
+   **Bravo! Environment is ready to use!**
 
 
 ## Step 2: Training Neural Network Controller
 
-1. Preparing the training data:
-    
-    a) Change directory: `cd ~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation`
+To train the neural network controller, follow these steps:
 
-    b)	[already done on our server] Create Directory named Experiments under `./SI_Toolkit_ASF`
+1. **Locate Pre-Computed Training Set**
 
-    c)	[already done on our server] Place Training Data folder `Experiment-14` under `./SI_Toolkit_ASF/Experiments` 
+   The precomputed dataset is initially located in the root directory of the repository:
+   ```
+   ./Experiment-1
+   ```
 
-2. Edit the training configuration file:
+   After executing step 2, the dataset will be moved to the appropriate location within the directory:
+   ```
+   Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1
+   ```
 
-    Edit .yml file `./SI_Toolkit_ASF/config_training.yml`:
+2. **Run Pre-Computed Model**
 
-    Important paths to set correctly:
-    
-        - path_to_experiment: ‘Experiment-14’
-        - PATH_TO_EXPERIMENT_FOLDERS: `./SI_Toolkit_ASF/Experiments/`
+   If you do not wish to retrain the model and want to use the precomputed model, execute the following commands:
+   ```bash
+   chmod +x ./step2-no-train.sh
+   ./step2-no-train.sh
+   ```
 
-    In this config file you will fine other options to determine the training parameters,
-    such as number of epochs, batch size, etc.
+   If the `chmod` command does not work, you can run the commands manually from the `step2-no-train.sh` script. Open the script in a text editor and execute each command one by one in your terminal.
 
-3. Preparing normalization file:
+3. **Modify Neural Network Parameters**
 
-    a) Make sure you are still in the `CartPoleSimulation` directory.
+   To modify the neural network parameters, edit the configuration file located at:
+   ```
+   Driver/CartPoleSimulation/SI_Toolkit_ASF/config_training.yml
+   ```
+   You can use a text editor such as `vim` or any other editor of your choice.
 
-    b) Execute:
-    `python SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`
+4. **Train the Neural Network**
 
-    c) [already done on our server]  Navigate to:
-    `~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`<br>
-    edit configuration of this .py to make working directory CartPoleSimulation
+   To train the neural network with the updated parameters, execute:
+   ```bash
+   chmod +x ./step2.sh
+   ./step2.sh
+   ```
 
-4. Training the network:
+   If the `chmod` command does not work, you can run the commands manually from the `step2.sh` script. Open the script in a text editor and execute each command one by one in your terminal.
 
-    a) Execute `A1_Create_Normalization_File.py` from the `CartPoleSimulation` directory:
-    `python SI_Toolkit_ASF/Run/A1_Create_Normalization_File.py`
-
-    b) [already done on our server] Navigate to `../CartPoleSimulation/SI_Toolkit_ASF/Run/A2_Train_Network.py` <br>
-    Edit Configuration of `A2_Train_Network.py` to make working directory CartPoleSimulation
-
-    c)  Execute python `A2_Train_Network.py` <br>
-    `python SI_Toolkit_ASF/Run/A2_Train_Network.py`<br>
-
-A newly created model is added into the: `../CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14/Models` directory
-
-
-
-## Step 3: Cartpole simulator
-
-You can visualize the functioning of the controller using the cartpole simulator GUI.
-
-1. Change directory: `cd ~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation`
-
-2. Open the controllers configuration file: `vim Control_Toolkit_ASF/config_controllers.yml`
-
-3. In the configuration file, under "neural-imitator" section, set the follwing parameters:
+    A newly created model will be added into the following directory:
     ```
-    PATH_TO_MODELS: './SI_Toolkit_ASF/Experiments/Experiment-14/Models/'
-    net_name: 'Your_model_name'  # TF
-    Input_precision = 'float'
-    hls4ml = False
+    Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models
     ```
-   Save and close the file.
-
-4. In folder ./Driver/CartpoleSimulation execute `python run_cartpole_gui.py`
-
-5. Use GUI to experiment with different settings.
-You can save recordings as csv files for further analysis and training of the neural network controllers.
-
-## Step 4: Conversion of neural network controller through hls4ml
-
-1.	Edit `~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/config_hls.yml` to do the following:
-    - Point to correct Vivado path
-    - Point to correct Model folder
-    - Correct Model name
-
-    Adjust other hls setting if desired
-
-2.	Execute <br>
-`~/cartpole/common/physical-cartpole/Driver/CartPoleSimulation$ python SI_Toolkit_ASF/Run/Convert_Network_With_hls4ml.py` 
 
 
-HLS4ML folder will be created upon completion: `~/cartpole/HLS4ML/`
+## Step 3: Cartpole Simulator
 
-All vhdl files generated under
- 
-`./HLS4ML/d3232_12_2_v0/myproject_prj/solution1/impl/vhdl` need to be transferred into the **Vivado Project in Step 6**.
+ Execute the following commands to start the GUI application:
+   ```bash
+   chmod +x ./step3.sh
+   ./step3.sh [MODEL_NAME]
+   ```
 
-3. HLS4ML folder will be created upon completion <br>
-   Take a note of all vhdl files generated under `./HLS4ML/d3232_12_2_v0/myproject_prj/solution1/impl/vhdl`. <br>
-   To import these files into the Vivado project, after step 6.2, open sources and select all .vhd files and remove them from project. These are the files of the         previously trained model. Then select their parent folder and right click and select "Add sources," and add all of the new .vhd files generated.
+   - The `MODEL_NAME` parameter is optional. If not provided, the script will use the default pre-trained model.
+   - If you want to test different models trained at step 2, you can specify the `MODEL_NAME` as an argument. The available model names are located in the folder:
+     ```
+     Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models
+     ```
+
+   This will launch the Cartpole simulator GUI.
+
+2. **Experiment with Different Settings**
+
+   Use the GUI to experiment with various settings and observe how the controller performs.
+
+3. **Save Recordings**
+
+   You can save recordings of your experiments as CSV files. These recordings can be used for further analysis and training of the neural network controllers.
+
+### Note
+
+- If the `chmod` command does not work, open the `step3.sh` script in a text editor and run each command manually from the script.
+
+By passing different model names, you can easily test and compare the performance of various trained models.
+
+## Step 4: Conversion of Neural Network Controller using hls4ml
+
+### 1. Edit the Configuration File
+
+You need to modify the file located at `Driver/CartPoleSimulation/SI_Toolkit_ASF/config_hls.yml`. 
+
+This file contains parameters used for converting the neural network controller into HLS (High-Level Synthesis) code via `hls4ml`. However, **this is not the standard `hls4ml` YAML configuration format**. Instead, it is a custom file where these parameters are parsed and then used to generate the actual HLS configuration. For reference, you can find the standard `hls4ml` YAML format here:
+[https://fastmachinelearning.org/hls4ml/api/configuration.html](https://fastmachinelearning.org/hls4ml/api/configuration.html).
+
+You can modify several important parameters in the file:
+- **PRECISION**: Adjust precision for the network layers.
+- **Strategy**: Choose the optimization strategy.
+- **ReuseFactor**: Set the reuse factor for the network's HLS implementation.
+
+Additionally, you need to modify the following paths:
+- **`path_to_hls_installation`**: 
+<br>**Attention, VIVADO 2020.1 is required**. 
+<br>Set this to the Vivado installation path. If you're unsure, run:
+  ```bash
+  echo $XILINX_VIVADO
+  ```
+  Copy and paste the displayed path here.
+- **`path_to_models`**: Set this to:
+  ```bash
+  './SI_Toolkit_ASF/Experiments/Experiment-1/Models'
+  ```
+- **`net_name`**: Specify the model name you want to use from the available models in `Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models`.
+- **`output_dir`**: Set the directory where output files will be saved. Please put:
+  ```bash
+  ../../HLS4ML/x3232_12_2_v3
+  ```
+  This places the `HLS4ML` folder directly inside the root of the repository folder (where files like `.gitignore` are located).
+
+### 2. Understanding the Conversion Process
+
+The script you'll execute leverages key methods from the [hls4ml](https://github.com/fastmachinelearning/hls4ml) library to convert the neural network. Specifically, it uses:
+- `hls4ml.utils.config_from_keras_model`
+- `hls_model = hls4ml.converters.convert_from_keras_model`
+- `hls_model.compile`
+- `hls_model.build`
+- `hls4ml.utils.plot_model`
+- `hls4ml.report.read_vivado_report`
+
+If you're interested in understanding how these methods are applied, refer to the script:
+```bash
+Driver/CartPoleSimulation/SI_Toolkit_ASF/Run/Convert_Network_With_hls4ml.py
+```
+You can explore the method `train_network` imported from `SI_Toolkit.Training.Train` to see what is being executed in detail.
+
+### 3. Execute the Conversion
+
+To run the conversion process, execute the following commands:
+```bash
+cd Driver/CartPoleSimulation
+python SI_Toolkit_ASF/Run/Convert_Network_With_hls4ml.py
+```
+
+Note: it is important to run the python command from the `Driver/CartPoleSimulation` directory.
+
+
+### 4. Generated Files
+
+Upon completion, an `HLS4ML` folder will be created based on the configurations in the YAML file. The VHDL files generated can be found under:
+```bash
+./HLS4ML/x3232_12_2_v3/myproject_prj/solution1/impl/vhdl
+```
+
+These files are necessary for the Vivado project described in Step 6.
 
 
 
@@ -239,137 +333,131 @@ Key Bindings:
 
 ## Step 6: Implementation
 
-There are two parts to the system implementation: 1) generating the NN model bit stream and 2) generating the full Zynq SoC project including board interfaces.
+There are two parts to the system implementation: 
+1. generating the NN model bitstream.
+2. generating the full Zynq SoC project including board interfaces.
 
-### Generating the FPGA bit file (executable)
+### Generating the FPGA Bitstream (Executable)
 
-1. Start Vivado2020.1 within folder  by `executing ~/vivado.2020.1
-  /physical-cartpole/FPGA/VivadoProjects$ ~/vivado.2020.1`
+1. Vivado 2020.1 is required for this step (GUI version).<br>
+Start Vivado (you may need to use VNC or XQuartz if running on a remote server to be able to use the GUI. In this case you may need to use the `-Y` flag in the ssh command).
 
-2.	Inside Vivado GUI: 
-   
-    Go to Tools in top toolbar and choose “Run tcl script”
-  	            Before running the tcl file, update the board file definition on physical-cartpole/FPGA/VivadoProjects/CartpoleDriverZynq_21_08_2024.tcl Line 94:
-  	Replace line 94 with this line (only "part0:1.1" has been changed to "part0:1.0"):
-  	
-  	'set_property -name "board_part" -value "digilentinc.com:zybo-z7-20:part0:1.0" -objects $obj'
+2. Inside the Vivado GUI:
 
-  	and save.
+    - Go to the **Tools** menu in the top toolbar and select **Run Tcl Script**.
 
-                `Choose CartpoleDriverZynq_21_08_2024.tcl` and execute
+    - Ensure that you have the board definition for `digilentinc.com:zybo-z7-20:part0:1.0` installed. This board definition is required for the implementation.
 
-                This script loads all files needed for implementation. When the script finishes
+    - Choose the script file `CartpoleDriverZynq_new.tcl` located in the `FPGA/VivadoProjects/` directory, located in the base directory of the cloned GitHub repository, and execute it. This script loads all files needed for implementation.
 
-4. Execute Generate Bitstream
+3. After the script finishes executing, click on **Generate Bitstream**.
 
-5. After the conclusion of this step, click OK on the next dialog box
+4. Once the bitstream generation is complete, click **OK** on the dialog box that appears.
 
-6. Bitstream will be written and message “Bitstream Generation Successfully Completed” will be displayed
+5. The message **"Bitstream Generation Successfully Completed"** will be displayed.
 
-7. If you wish to observe the implementation layout on the FPGA, you can choose Open Implemented Design, otherwise choose Cancel
+6. If you wish to observe the implementation layout on the FPGA, you can choose **Open Implemented Design**; otherwise, choose **Cancel**.
 
-8. Go to File –> Export -> Export Hardware [choose Platform Type as Fixed] click Next
+7. Go to **File** → **Export** → **Export Hardware**. Choose **Platform Type** as **Fixed** and click **Next**.
 
-9. Choose Output as [Include Bitstream] click Next
+8. Choose **Output** as **Include Bitstream** and click **Next**.
 
-10. leave default choices and click Next
+9. Leave the default choices and click **Next**.
 
-11. Finish
+10. Click **Finish**.
 
-12. Close Vivado
+11. Close Vivado.
 
-### Generating the SoC project
 
-13.  Navigate to `/physical-cartpole/Firmware$`
+### Generating the SoC Project
 
-14. Execute `physical-cartpole/Firmware$ source /tools/Xilinx/Vitis/2020.1/settings64.sh`
+1. Navigate to the `Firmware` directory , located in the base directory of the cloned GitHub repository, using the terminal.
 
-15. Start Vitis 2020.1: `physical-cartpole/Firmware$` vitis
+2. Ensure that Vitis 2020.1 is installed and available. You can check the version by running:
+    ```bash
+    vitis -version
+    ```
+   Once confirmed, start Vitis by running:
+    ```bash
+    vitis
+    ```
 
-16. In Select Workspace Directory dialog box create a new folder named VitisProjects under `physical-cartpole/Firmware/`
+4. In the **Select Workspace Directory** dialog box, choose the `Firmware/VitisProjects`.
 
-17. Click Launch
+5. Click **Launch** to open the Vitis workspace.
 
-18. In Vitis GUI: Create new Application Project
+6. In the Vitis GUI, create a new **Application Project**.
 
-19. Choose Create New Platform from hardware (XSA) Tab
+7. Under the **Create New Platform from Hardware (XSA)** tab, select the XSA file by navigating to:
+    ```bash
+    FPGA/VivadoProjects/CartPoleDriverZynq/cartpole_driver_design_wrapper.xsa
+    ```
 
-20. Navigate to:  
-`physical-cartpole/FPGA/VivadoProjects/CartPoleDriverZynq/
-cartpole_driver_design_wrapper.xsa`
+8. Make sure the **Generate Boot Components** box is selected, then click **Next**.
 
-21. Click OK
+9. In the **Application Project Details** dialog box:
+    - Enter `CartPoleFirmware` as the **Application Project Name**.
+    - Choose `ps7_cortexa9_0` as the processor.
 
-22. Make sure the Generate Boot Components box is selected in this dialog box
+10. Click **Next**.
 
-23. Click Next
+11. Click **Next** again and then **Finish** to create the project.
 
-24. In the Application Project Details Box: 
-  - enter CartPoleFirmware as Application Project Name
-  - Choose ps7_cortexa9_0
+12. A new project window will open. In this window, expand the `src` folder.
 
-24. Click Next
+13. Delete all existing `.c` and `.h` files inside the `src` folder.
 
-25. Click Next again
+14. Return to the terminal and execute the following script to populate the `src` folder with necessary files:
+    ```bash
+    ./Firmware/create_symlinks_cartpole.sh
+    ```
 
-26. Click Finish
+15. Return to the Vitis project window and observe the `src` folder being populated with new files.
 
-27. A new project window opens
 
-28. Expand src folder
-
-29. Delete all .c and .h files
-
-30. Return to terminal
-
-31. Uncomment reference to zynq implementation for cartpole firmware in the `create_symlinks.sh` file
-
-32. Execute `physical-cartpole/Firmware/./create_symlinks.sh`
-
-33. You can go back to Vitis project window and observe the src folder being populated with several new files
-
-34. Under src open `parameters.c` and edit as follows
-
-35. [these values are specific to the cartpole hardware] 
-  `Line 52: float MOTOR_CORRECTION[3] = {0.6310468, 0.0472680, 0.0408973};`
-
-36. `Line 54: float ANGLE_HANGING_POLOLU = 783.0; `
-
-37. Save `parameters.c`
-
-38.	Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and C/C++ Build Settings
-
-39. In the box at the center choose Libraries
-
-40. In the Libraries pane click on the + sign
-
-41. Enter m in the Enter Value Box
-
-42. Choose Apply and Close
-
-43. Each time a new model is built do the following:
-
-      Replace the in and out vector normalizations in neural-imitator.c values with the data from
-      `test1/physicalcartpole/Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14/Models/`
-      [Use the name of model folder used]
-
-      These are the values we used in our case:
-
-      ```float hls_normalize_a[] = {0.05600862,1.00000000,1.00000000,5.20657063,0.88941061,1.00000000,5.05586720};
-      float hls_normalize_b[] = {0.02947879,0.00000000,0.00000000,0.01642668,0.00083601,0.00000000,0.00045502};
-      float hls_denormalize_A[] = {1.0};
-      float hls_denormalize_B[] = {0.0};
+16. Open `parameters.c` inside the `src` folder and edit the following values, which are specific to the cartpole hardware and were generated in Step 5:<br><br>
+   **Important**: The values below are just examples. Be sure to replace them with the actual values generated for your physical setup.
+      ```c
+      Line 52: float MOTOR_CORRECTION[3] = {0.6310468, 0.0472680, 0.0408973};
+      Line 54: float ANGLE_HANGING_POLOLU = 783.0;
       ```
 
-      Similarly, in neural-imitator.h update model input output size if new model is sized differently or has different precision.
+17. Save the `parameters.c` file.
 
-44. Right click on CartPoleFirmware[domain_ps7_cotexa9_0] and choose Build Project
+18. Right-click on `CartPoleFirmware [domain_ps7_cortexa9_0]` and select **C/C++ Build Settings**.
 
-45. Right Click on CartPoleFirmware[cartpole_driver_design_wrapper] and choose Create Boot Image
+19. In the center box, choose **Libraries**.
 
-46. Leave default settings and Create Image
+20. In the **Libraries** pane, click the `+` sign, and in the **Enter Value** box, type:
+    ```bash
+    m
+    ```
 
-47. Retrieve the .bin file from the path displayed to load on an SD card and program FPGA with it
+21. Click **Apply and Close**.
+
+22. Each time a new model with a different architecture is built, update the input and output vector normalization values in `src/Zynq/neural-imitator.c` with the new model data from:
+    ```bash
+    Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/
+    ```
+
+    Example normalization values:
+    ```c
+    float hls_normalize_a[] = {0.05600862, 1.00000000, 1.00000000, 5.20657063, 0.88941061, 1.00000000, 5.05586720};
+    float hls_normalize_b[] = {0.02947879, 0.00000000, 0.00000000, 0.01642668, 0.00083601, 0.00000000, 0.00045502};
+    float hls_denormalize_A[] = {1.0};
+    float hls_denormalize_B[] = {0.0};
+    ```
+
+      Additionally, update the model input/output size and precision if necessary in `src/Zynq/neural-imitator.c` and `neural-imitator.h`.
+
+24. Right-click on `CartPoleFirmware [domain_ps7_cortexa9_0]` and choose **Build Project**.
+
+25. Right-click on `CartPoleFirmware [cartpole_driver_design_wrapper]` and choose **Create Boot Image**.
+
+26. Leave the default settings and click **Create Image**.
+
+27. Retrieve the `.bin` file from the path displayed on the console to load onto an SD card and program the FPGA.
+
 
 ## Step7
 
