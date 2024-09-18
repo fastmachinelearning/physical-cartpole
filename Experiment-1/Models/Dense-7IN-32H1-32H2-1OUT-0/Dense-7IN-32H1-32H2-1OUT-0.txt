@@ -1,0 +1,62 @@
+CREATED:
+2024-08-22 at time 17:14:53
+
+WITH GIT REVISION:
+408f48159fbf0fff44340ebf4bb926ba8d8bb68b
+
+LIBRARY:
+TF
+
+NET NAME:
+Dense-32H1-32H2
+
+NET FULL NAME:
+Dense-7IN-32H1-32H2-1OUT-0
+
+INPUTS:
+angleD, angle_cos, angle_sin, position, positionD, target_equilibrium, target_position
+
+OUTPUTS:
+Q_calculated
+
+TRANSLATION INVARIANT VARIABLES:
+
+
+TYPE:
+Dense
+
+NORMALIZATION:
+./SI_Toolkit_ASF/Experiments/Experiment-14/Models/Dense-7IN-32H1-32H2-1OUT-0/NI_2024-08-22_17-14-12.csv
+
+NORMALIZE:
+True
+
+PARENT NET:
+Network trained from scratch
+
+WASH OUT LENGTH:
+0
+
+POST WASH OUT LENGTH:
+50
+
+SHIFT LABELS:
+0
+
+CONSTRUCT NETWORK:
+with cells
+
+TRAINING_FILES:
+./SI_Toolkit_ASF/Experiments/Experiment-14/Recordings/Train
+
+VALIDATION_FILES:
+./SI_Toolkit_ASF/Experiments/Experiment-14/Recordings/Validate
+
+TEST_FILES:
+./SI_Toolkit_ASF/Experiments/Experiment-14/Recordings/Test
+
+TIMESTEP MEAN [s]:
+0.0
+
+TIMESTEP STD [s]:
+0.0
