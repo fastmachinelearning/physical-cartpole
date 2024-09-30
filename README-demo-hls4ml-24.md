@@ -233,9 +233,6 @@ This step focuses on testing the trained model by controlling the physical Cartp
 
 Please also have a look at the [Calibration section](./README.md#calibration) of the README.
 
-To perform this test, follow the steps below.
-
----
 
 ### 5.1 Set the Controller
 
@@ -301,7 +298,10 @@ Ensure that the model configuration matches your trained neural network by modif
    ...
    ```
 
-***ATTENTION! Use the calibration values obtained here (motor power, middle of the track, vertical angle) in later steps. These values will be critical for ensuring the system functions correctly when transitioning to SoC-based control in Step 6.***
+Values for `ANGLE_HANGING_POLOLU` and `MOTOR_CORRECTION` are determined in this step and incorporated into the settings during implementation. 
+
+***ATTENTION:*** These calibration values (motor power, middle of the track, and vertical angle) will be critical for ensuring the system functions correctly when transitioning to SoC-based control in Step 6. You can repeat this process after the first implementation by opening the `parameters.c` file in Vitis and regenerating the Boot Image.
+
 
 ---
 
@@ -446,25 +446,13 @@ Start Vivado (you may need to use VNC or XQuartz if running on a remote server t
 27. Retrieve the `.bin` file from the path displayed on the console to load onto an SD card and program the FPGA.
 
 
-## Step7
+## Step 7
 
 Load Image on SD card and onto FPGA
 
-## Step8
+This is the final step.
 
-Calibrate Cartpole (important parameters: hanging angle, motor power)
+Once the image is successfully loaded onto the SD card and FPGA, the system will be fully configured and ready for operation.
+There are four switches on the board: the two in the middle serve important functions. One of the switches calibrates the center of the track, while the other allows the cartpole to stabilize either in the upward or downward position. Play with them to see what happens!
 
-Execute `control.py` (see Step 5)
-
-This Step is still under construction… Will be updated soon.
-
-[Hold cartpole in down position and note the value of angle_raw
-
-Values for ANGLE_HANGING_POLOLU and MOTOR_CORRECTION values are determined in this step and incorporated into the settings during implementation
-
-This can be repeated after the first implementation run by opening parameters.c file with Vitis repeatedly and regenerating Boot Image.]
-
-
- 
-
-
+Congratulations on completing the setup!
