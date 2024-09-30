@@ -9,6 +9,9 @@ It provides integration with [Neural Control Tools](https://github.com/SensorsIN
 The cartpole robot producer and developers of this repository are independent parties
 hence we cannot guarantee the compatibility with future versions of the robot.
 
+***For instructions specific to the hls4ml demo, please refer to the [README for the hls4ml demo](./README-demo-hls4ml-24.md).***
+
+
 ## Publications
 * [Hardware Neural Control of CartPole and F1TENTH Race Car](https://arxiv.org/abs/2407.08681)
 * [RPGD: A Small-Batch Parallel Gradient Descent Optimizer with Explorative Resampling

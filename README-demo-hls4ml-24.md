@@ -113,33 +113,49 @@ To train the neural network controller, follow these steps:
 
 ## Step 3: Cartpole Simulator
 
- Execute the following commands to start the GUI application:
-   ```bash
-   chmod +x ./step3.sh
-   ./step3.sh [MODEL_NAME]
-   ```
+In this section, we will primarily focus on using the Cartpole Simulator to test the performance of trained neural network controllers. This simulator not only allows for performance evaluation but can also be used to generate new datasets for further training. Here, we will describe how to effectively use the simulator to assess your model's capabilities.
 
-   - The `MODEL_NAME` parameter is optional. If not provided, the script will use the default pre-trained model.
-   - If you want to test different models trained at step 2, you can specify the `MODEL_NAME` as an argument. The available model names are located in the folder:
+### Using the Simulator to Test Neural Network Performance
+
+Follow these steps to evaluate your trained neural network using the Cartpole Simulator:
+
+1. **Choose the Model**:
+   - Run the script with the desired model name as an argument to select a specific trained model. If no model name is provided, the default pre-trained model will be used.
+   - Available model names can be found in the following folder:
      ```
      Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models
      ```
 
-   This will launch the Cartpole simulator GUI.
+2. **Launch the GUI**:
+   - Execute the commands below to start the Cartpole Simulator GUI:
+     ```bash
+     chmod +x ./step3.sh
+     ./step3.sh [MODEL_NAME]
+     ```
 
-2. **Experiment with Different Settings**
+3. **Configure the Simulation Settings**:
+   - In the GUI, select **"Neural-Imitator"** under the controller options on the right side.
+   - Adjust the following settings to test the network effectively:
+     - **Initial Position**: Set the starting position of the cart.
+     - **Initial Angle**: Set the starting angle of the pole.
+     - **Latency**: Define the response time of the controller to changes in the system.
 
-   Use the GUI to experiment with various settings and observe how the controller performs.
+4. **Perform Kicking Simulations**:
+   - Use the provided buttons to simulate a kick to the left or right, allowing you to observe how the model reacts to disturbances.
 
-3. **Save Recordings**
+5. **Observe Performance**:
+   - Watch the simulation in real-time and note how well the controller maintains the balance of the pole and cart.
 
-   You can save recordings of your experiments as CSV files. These recordings can be used for further analysis and training of the neural network controllers.
+6. **Save Your Experiment**:
+   - You can save recordings of your experiments as CSV files for further analysis and refinement of the neural network controllers.
+
+By following these steps, you can effectively assess and compare the performance of different trained models in the Cartpole Simulator.
 
 ### Note
 
 - If the `chmod` command does not work, open the `step3.sh` script in a text editor and run each command manually from the script.
 
-By passing different model names, you can easily test and compare the performance of various trained models.
+
 
 ## Step 4: Conversion of Neural Network Controller using hls4ml
 
@@ -211,124 +227,95 @@ Upon completion, an `HLS4ML` folder will be created based on the configurations 
 These files are necessary for the Vivado project described in Step 6.
 
 
+## Step 5: Testing Model on PC - Running Model via PC/Software to Control Cartpole
 
-## Step 5. Testing model on PC - Running Model via PC/Software to control Cartpole:
+This step focuses on testing the trained model by controlling the physical Cartpole using a PC. In this demo, we will configure settings that depend on the physical system (such as motor power, track middle, and vertical angle). These calibrated values will be saved and used later in Step 6 when creating the SoC project.
 
-Relevant script is physical_cartpole/Driver/control.py
+Please also have a look at the [Calibration section](./README.md#calibration) of the README.
 
-Following edits need to be made:
+To perform this test, follow the steps below.
 
-### 5.1 
+---
 
-`physical_cartpole/Driver/globals.py`: edit controller name = neural-imitator; 
+### 5.1 Set the Controller
 
+In the following file, set the `controller` to use the neural network imitator:
 
-### 5.2 
+- **File**: `physical_cartpole/Driver/globals.py`
+- **Edit**: Change the controller name to `neural-imitator`:
+  ```python
+  controller = 'neural-imitator'
+  ```
 
-`physical_cartpole/Driver/DriverFunctions/interface.py`
+### 5.2 Serial Port Configuration
 
-the serial port ID of the PC used to control the cartpole needs to be set correctly (we ran into issues when using a Macbook Pro and worked around as follows, might not be an issue for other PCs, needs to be checked)
+If you're using a MacBook Pro or a similar system, you might encounter issues identifying the serial port used to control the Cartpole. To work around this issue:
 
-we hardwired the Serial Port ID by commenting out the function which returns serial port ID:
+1. **File**: `physical_cartpole/Driver/DriverFunctions/interface.py`
+2. **Step**: Comment out the function that automatically detects the serial port ID.
+3. **Action**: Manually set the serial port ID. For example, on a Mac:
+   ```python
+   SERIAL_PORT = '/dev/tty.usbserial-210351B7BD461'  # Replace with your serial port ID
+   ```
+   > Use the command `ls /dev/tty.*` in your terminal to find your specific serial port ID, ensuring the FPGA is connected and powered on.
 
-```
-    # from serial.tools import list_ports
-    # ports = list(serial.tools.list_ports.comports())
-    # serial_ports_names = []
-    # print('\nAvailable serial ports:')
-    # for index, port in enumerate(ports):
-    #     serial_ports_names.append(port.device)
-    #     print(f'{index}: port={port.device}; description={port.description}')
-    # print()
-    #
-    # if chip_type == "STM":
-    #     expected_description = 'USB Serial'
-    # elif chip_type == "ZYNQ":
-    #     expected_description = 'Digilent Adept USB Device - Digilent Adept USB Device'
-    # else:
-    #     raise ValueError(f'Unknown chip type: {chip_type}')
-    #
-    # SERIAL_PORT = None
-    # for port in ports:
-    #     if port.description == expected_description:
-    #         SERIAL_PORT = port.device
-    #         break
-    # if SERIAL_PORT is None:
-    #     message = f"Searching serial port by its expected description - {expected_description} - not successful."
-    #     if serial_port_number is not None:
-    #         print(message)
-    #     else:
-    #         raise Exception(message)
-    #
-    # if SERIAL_PORT is None and serial_port_number is not None:
-    #     if len(serial_ports_names)==0:
-    #         print(f'No serial ports')
-    #     else:
-    #         print(f"Setting serial port with requested number ({serial_port_number})\n")
-    #         SERIAL_PORT = serial_ports_names[serial_port_number]
-```
+### 5.3 Model Configuration
 
-And setting variable directly instead:
+Ensure that the model configuration matches your trained neural network by modifying the following file:
 
-`SERIAL_PORT = '/dev/tty.usbserial-210351B7BD461'` [this is a specific ID fpor the specific Macbook Pro and USB connector we have used]
+- **File**: `/physical-cartpole/Driver/CartPoleSimulation/Control_Toolkit_ASF/config_controllers.yml`
+- **Steps**:
+  - Set the correct model path:
+    ```yaml
+    PATH_TO_MODELS: './CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/'
+    ```
+  - Set the model name:
+    ```yaml
+    net_name: 'Dense-7IN-32H1-32H2-1OUT-0'  # Example TF model name
+    ```
+  - Ensure input precision and other related parameters are correct:
+    ```yaml
+    Input_precision: float
+    hls4ml: False
+    ```
 
-We used the following command in Mac terminal to display the USB Serial Port ID:
+### 5.4 Running the Software to Control Cartpole
 
-ls /dev/tty.* (from any directory), making sure the FPGA is connected to the computer and ON. 
+1. **Set the Python Path**: Navigate to the `physical-cartpole/` directory and set the `PYTHONPATH` environment variable to the project root. Run the following command:
+   ```bash
+   export PYTHONPATH=$(pwd):$PYTHONPATH
+   ```
 
-### 5.3 Navigate to script: 
+2. **Start the Control Script**: Execute the following command from the `physical-cartpole` root directory:
+   ```bash
+   python Driver/control.py
+   ```
 
-`/physical-cartpole/Driver/CartPoleSimulation/Control_Toolkit_ASF/config_controllers.yml`
+3. **Key Bindings for Additional Control**: The following keyboard shortcuts are available for testing various functionalities:
+   ```plaintext
+   h: Print help message
+   K: Calibration: find track middle
+   k: PC Control On/Off
+   u: Chip Control On/Off
+   D: Dance Mode On/Off
+   ...
+   ```
 
-Match the model name and Model paths:
+***ATTENTION! Use the calibration values obtained here (motor power, middle of the track, vertical angle) in later steps. These values will be critical for ensuring the system functions correctly when transitioning to SoC-based control in Step 6.***
 
-`PATH_TO_MODELS: './CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-14 /Models/'`
+---
 
-`net_name: 'Dense-7IN-32H1-32H2-1OUT-0'  # TF`
+### Note on Calibration
 
-`Input_precision = float `
+The calibration process during this step ensures that the physical Cartpole is correctly aligned and functional. You will be configuring:
 
-`hls4ml = False`
+1. **Middle of the Cartpole Track**: Recalibrate each time the Cartpole is powered on.
+2. **Motor Power**: Ensure the Cartpole can move freely without friction issues.
+3. **Vertical Angle**: Correctly calibrate the potentiometer's dead zone to avoid control interference.
 
-### 5.4 
+This calibration saves system-specific parameters, which will be reused in the SoC setup in Step 6.
 
-go back to /physical-cartpole/
-
-execute `/physical-cartpole$ python Driver/control.py`
-
-use keyboard shortcuts to run different calibration modes, hitting ‘h’ on the keyboard will display all options
-
-```
-Key Bindings:
- h: Print this help message
- ?: Print this help message
- K: Calibration: find track middle
- k: PC Control On/Off
- u: Chip Control On/Off
- D: Dance Mode On/Off
- m: Change Experiment Protocol: running and recording predefined sequence of movements
- n: Start/Stop Experiment Protocol
- N: Start Experiment Protocol from Chip
- l: Start/Stop recording to a CSV file
- L: Start/Stop time limited recording to a CSV file
- 6: Start/Stop sending data to Live Plotter Server - real time visualization
- 7: Save data and figure at Live Plotter Server
- 8: Reset Live Plotter Server
- ;: Switch target equilibrium
- ]: Increase target position
- [: Decrease target position
- b: Start precise angle measurement - multiple samples
- =: Finetune zero angle - increase angle deviation parameter
- -: Finetune zero angle - decrease angle deviation parameter
- 9: Increase additional latency
- 0: Decrease additional latency
- j: Joystick On/Off
- .: Key not assigned
- ,: Key not assigned
- /: Key not assigned
- 5: Key not assigned
-  ESC: Start experiment termination
-```
+---
 
 
 ## Step 6: Implementation
@@ -435,7 +422,7 @@ Start Vivado (you may need to use VNC or XQuartz if running on a remote server t
 
 21. Click **Apply and Close**.
 
-22. Each time a new model with a different architecture is built, update the input and output vector normalization values in `src/Zynq/neural-imitator.c` with the new model data from:
+22. (Optional) Each time a new model with a different architecture is built, update the input and output vector normalization values in `src/Zynq/neural-imitator.c` with the new model data from:
     ```bash
     Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/
     ```
