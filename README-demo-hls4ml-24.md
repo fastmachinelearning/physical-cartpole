@@ -422,10 +422,16 @@ Start Vivado (you may need to use VNC or XQuartz if running on a remote server t
 
 21. Click **Apply and Close**.
 
-22. (Optional) Each time a new model with a different architecture is built, update the input and output vector normalization values in `src/Zynq/neural-imitator.c` with the new model data from:
+22. Update the input and output vector normalization values in `src/Zynq/neural-imitator.c` with the new model data from:
     ```bash
-    Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/
+    Driver/CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/[ModelName]
     ```
+      The following files should be used:  
+          - `normalization_vec_a.csv`  
+          - `normalization_vec_b.csv`  
+          - `denormalization_vec_A.csv`  
+          - `denormalization_vec_B.csv`
+
 
     Example normalization values:
     ```c
