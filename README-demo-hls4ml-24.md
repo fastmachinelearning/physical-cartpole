@@ -190,6 +190,14 @@ Additionally, you need to modify the following paths:
   ```
   This places the `HLS4ML` folder directly inside the root of the repository folder (where files like `.gitignore` are located).
 
+  #### Possible Compatibility Issue with Vivado 2020.1 on Newer Linux Versions
+     When using Vivado 2020.1 on newer Linux versions, you may encounter a compatibility issue due to `binutils-2.26` not working well with newer versions of `glibc`. An error like the following may occur:
+  
+  `/opt/xilinx/Vivado/2021.1/tps/lnx64/binutils-2.26/bin/ld: /lib64/libm.so.6: don't know how to handle section '.relr.dyn' [0x 13]`
+  
+   A possible workaround is to temporarily remove `ld` within Vivado's `binutils`, as suggested in [this article](https://adaptivesupport.amd.com/s/question/0D54U00005VQKeNSAX/vitis-hls-20211-ld-linker-and-libm-relr-section-error?language=en_US).
+
+
 ### 2. Understanding the Conversion Process
 
 The script you'll execute leverages key methods from the [hls4ml](https://github.com/fastmachinelearning/hls4ml) library to convert the neural network. Specifically, it uses:
