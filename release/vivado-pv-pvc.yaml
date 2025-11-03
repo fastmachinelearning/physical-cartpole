@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: xilinx-pv
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadOnlyMany
+  gcePersistentDisk:
+    pdName: vivado-vitis-2020-1   # must exist in the SAME ZONE as your cluster nodes
+    fsType: ext4
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vivado-pvc
+  namespace: lab-test
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 500Gi
+  volumeName: xilinx-pv
+  storageClassName: ""   # IMPORTANT: force bind to static PV, no dynamic provisioning

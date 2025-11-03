@@ -4,6 +4,15 @@
 
 **Note**: The environment setup described below (Step 1) has **already been completed** on the lab server. You can **skip** this section when working remotely.  
 
+### Cloud Lab Resources
+
+Automation for the Google Cloud deployment (student desktop container, Kubernetes manifests, operator scripts) lives in the `release/` directory. Start with:
+
+- `release/README.md` – overview of the bundle contents.
+- `release/cloud-lab.md` – end-to-end guide for provisioning a fresh GCP project, configuring the GitHub workflow, and deploying the per-student lab environment.
+
+Use these files if you need to rebuild the hosted lab or reproduce the environment for another demo.
+
 ## Step 1: Environment Setup
 
 ### Clone the Github repository
@@ -411,6 +420,12 @@ cd ~/physical-cartpole
 
 cd ~/physical-cartpole/FPGA/VivadoProjects
 vivado -mode batch -source ~/physical-cartpole/generate_bitstream.tcl
+```
+```bash
+MALLOC_CHECK_=0 MALLOC_ARENA_MAX=2 \
+LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
+vivado -mode batch -source ~/physical-cartpole/generate_bitstream.tcl
+
 ```
 
 The Vivado automation script will:

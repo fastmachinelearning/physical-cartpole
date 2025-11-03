@@ -23,6 +23,8 @@ Driver/SI_Toolkit_ASF/Experiments/*
 *.pdf
 *.prof
 
+k8s
+
 /FPGA/VivadoProjects/*
 !/FPGA/VivadoProjects/CartpoleDriverZynq.tcl
 
