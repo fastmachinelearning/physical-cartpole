@@ -4,6 +4,7 @@ import numpy as np
 from CartPoleSimulation.CartPole.state_utilities import (create_cartpole_state,
                                                          ANGLE_IDX, ANGLE_COS_IDX, ANGLE_SIN_IDX, ANGLED_IDX,
                                                          POSITION_IDX, POSITIOND_IDX)
+from CartPoleSimulation.CartPole.cartpole_ekf import EKFCartPole, EKFAdaptiveTuner
 
 from DriverFunctions.joystick import Joystick
 from DriverFunctions.custom_logging import my_logger
@@ -16,6 +17,7 @@ from DriverFunctions.timing_helper import TimingHelper
 from Driver.DriverFunctions.interface import get_serial_port
 from Driver.DriverFunctions.main_logging_manager import MainLoggingManager
 from Driver.DriverFunctions.keyboard_controller import KeyboardController
+from Driver.DriverFunctions.DVS.angle_pos_client import AnglePositionClient
 
 from Control_Toolkit.Cost_Functions.CostFunctionUpdater import CostFunctionUpdater
 
@@ -33,6 +35,8 @@ from globals import (
     SERIAL_PORT_NUMBER, SERIAL_BAUD,
     SEND_CHANGE_IN_TARGET_POSITION_ALWAYS,
     AUTOSTART,
+    CALIBRATE_EKF_WITH_GOOD_SENSOR,
+    USE_DVS_STATE_ESTIMATION,
 )
 
 import warnings
@@ -43,7 +47,8 @@ class PhysicalCartPoleDriver:
     def __init__(self, CartPoleInstance):
 
         self.CartPoleInstance = CartPoleInstance
-        self.CartPoleInstance.set_optimizer(optimizer_name=OPTIMIZER_NAME)
+        if CONTROLLER_NAME == 'mpc':
+            self.CartPoleInstance.set_optimizer(optimizer_name=OPTIMIZER_NAME)
         self.CartPoleInstance.set_controller(controller_name=CONTROLLER_NAME)
         self.controller = self.CartPoleInstance.controller
 
@@ -63,7 +68,8 @@ class PhysicalCartPoleDriver:
 
         # Motor Commands
         self.Q = 0.0  # Motor command normed to be in a range -1 to 1
-        self.Q_prev = None
+        self.Q_prev = 0.0
+        self.Q_prev_prev = 0.0
         self.Q_ccrc_prev = None
         self.actualMotorCmd = 0
         self.actualMotorCmd_prev = None
@@ -73,6 +79,11 @@ class PhysicalCartPoleDriver:
         self.s = create_cartpole_state()
         self.th = TimingHelper()
         self.idp = IncomingDataProcessor()  # Takes care of receiving data from the chip and serves as container for raw values
+
+        self.s_dvs = create_cartpole_state()
+        self.s_ekf_dvs = create_cartpole_state()
+        self.s_original = create_cartpole_state()
+        self.s_ekf = create_cartpole_state()
 
         # Target
         self.position_offset = 0
@@ -90,9 +101,19 @@ class PhysicalCartPoleDriver:
 
         self.keyboard_controller = KeyboardController(self)
 
+        self.angle_position_client = None
+
+        self.ekf = EKFCartPole(
+            CONTROL_PERIOD_MS / 1000.0,
+            self.CartPoleInstance.cpe.params,
+        )
+        self.ekf_tuner = EKFAdaptiveTuner(self.ekf)
+        self._ekf_initialized = False
+        self._hi_grade_phase = CALIBRATE_EKF_WITH_GOOD_SENSOR
+
     def run(self):
+        self.setup()
         with self.mlm.terminal_manager():
-            self.setup()
             self.run_experiment()
             self.quit_experiment()
 
@@ -129,6 +150,17 @@ class PhysicalCartPoleDriver:
 
         self.InterfaceInstance.stream_output(True)  # now start streaming state
 
+        self.angle_position_client = AnglePositionClient()
+
+        if not self._ekf_initialized:
+            x0 = np.array([self.s[POSITION_IDX],  # cart position
+                           0.0,  # start with v = 0
+                           self.s[ANGLE_IDX],  # pole angle
+                           0.0])  # start with ω = 0
+            self.ekf.reset(x0)
+            self._ekf_initialized = True
+
+
     def run_experiment(self):
 
         while not self.terminate_experiment:
@@ -137,6 +169,7 @@ class PhysicalCartPoleDriver:
     def quit_experiment(self):
         CostFunctionUpdater.stop_all_watchers()  # Stop all active watchers
         # when x hit during loop or other loop exit
+        self.angle_position_client.close()
         self.InterfaceInstance.set_motor(0)  # turn off motor
         self.InterfaceInstance.close()
         self.joystick.quit()
@@ -154,6 +187,42 @@ class PhysicalCartPoleDriver:
         self.th.check_latency_violation(self.controlEnabled)
 
         self.idp.process_state_information(self.s, self.th.time_between_measurements_chip)
+
+        self.s_original[:] = self.s
+
+        if self._ekf_initialized:
+
+            # Feed the adaptive tuner *before* the EKF step
+            self.ekf_tuner.feed_measurement(
+                pos=self.s[POSITION_IDX],
+                ang=self.s[ANGLE_IDX],
+                u=self.Q_prev,  # motor effort of previous cycle
+                hi_grade=self._hi_grade_phase,
+                vel_gt=self.s[POSITIOND_IDX],  # only valid while hi‑grade == True
+                angvel_gt=self.s[ANGLED_IDX],
+            )
+
+
+            # Use the motor effort applied *during the previous interval*.
+            # self.Q_prev is your control signal in the range [-1,1]; scale if needed.
+            v_est, omega_est = self.ekf.step(
+                position_meas=self.s[POSITION_IDX],
+                angle_meas=self.s[ANGLE_IDX],
+                u=self.Q_prev,
+            )
+
+            x_hat = self.ekf.get_state()
+
+            # splice the estimates back into the pipeline
+            self.s_ekf[POSITIOND_IDX] = v_est
+            self.s_ekf[ANGLED_IDX] = omega_est
+            self.s_ekf[POSITION_IDX] = x_hat[0]
+            self.s_ekf[ANGLE_IDX] = x_hat[2]
+            self.s_ekf[ANGLE_COS_IDX] = np.cos(x_hat[2])
+            self.s_ekf[ANGLE_SIN_IDX] = np.sin(x_hat[2])
+
+        if USE_DVS_STATE_ESTIMATION:
+            self.overwrite_with_state_from_DVS(self.s)
 
         self.s = self.th.add_latency(self.s)
 
@@ -178,7 +247,7 @@ class PhysicalCartPoleDriver:
                     self.th.time_current_measurement_chip,
                     {"target_position": self.target_position,
                      "target_equilibrium": self.CartPoleInstance.target_equilibrium,
-                     "Q_ccrc": self.CartPoleInstance.Q_ccrc,
+                     "Q_ccrc": self.Q_prev_prev,  # Take care! The Q_ccrc is Q_prev (MPC) but the control from before the current state is Q_prev_prev (NN)
                      }
                 ))
 
@@ -209,12 +278,27 @@ class PhysicalCartPoleDriver:
         self.mlm.step()
 
         self.actualMotorCmd_prev = self.actualMotorCmd
+        self.Q_prev_prev = self.Q_prev
         self.Q_prev = self.Q
         self.Q_ccrc_prev = self.CartPoleInstance.Q_ccrc
 
         self.update_parameters_in_cartpole_instance()
 
         self.th.python_latency = self.th.time_since(self.InterfaceInstance.start)
+
+
+    def overwrite_with_state_from_DVS(self, s):
+        angle, position, positionD, angleD, ts = self.angle_position_client.get_estimate()
+
+        self.s_dvs[ANGLE_IDX] = angle
+        self.s_dvs[POSITION_IDX] = position
+        self.s_dvs[POSITIOND_IDX] = positionD
+        self.s_dvs[ANGLED_IDX] = angleD
+        self.s_dvs[ANGLE_COS_IDX] = np.cos(angle)
+        self.s_dvs[ANGLE_SIN_IDX] = np.sin(angle)
+
+        s[:] = self.s_dvs[:]
+
 
     def load_data_from_chip(self):
         # This function will block at the rate of the control loop

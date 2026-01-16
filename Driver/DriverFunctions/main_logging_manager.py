@@ -6,9 +6,8 @@ from SI_Toolkit.Functions.General.TerminalContentManager import TerminalContentM
 from CartPoleSimulation.CartPole.state_utilities import ANGLE_IDX, ANGLE_COS_IDX, ANGLE_SIN_IDX, ANGLED_IDX, \
     POSITION_IDX, POSITIOND_IDX
 
-from CartPoleSimulation.CartPole.data_manager import DataManager
-from CartPoleSimulation.CartPole.csv_logger import create_csv_file_name
-from DriverFunctions.csv_helpers import create_csv_header, create_csv_title
+from SI_Toolkit.General.data_manager import DataManager
+from CartPoleSimulation.CartPole.csv_logger import create_csv_file_name, create_csv_file, create_csv_header, create_csv_title
 
 from globals import (
     CONTROLLER_NAME, CONTROL_PERIOD_MS, PRINT_PERIOD_MS, CONTROL_SYNC,
@@ -67,7 +66,7 @@ class MainLoggingManager:
         self.data_to_save_measurement = {}
         self.data_to_save_controller = {}
 
-        self.data_manager = DataManager()
+        self.data_manager = DataManager(create_csv_file)
 
         self.csv_name = None
         self.recording_length = np.inf
@@ -127,12 +126,29 @@ class MainLoggingManager:
     def plot_live(self):
         if self.live_plotter_sender.connection_ready:
 
+            # only include controller columns when cost_component_* entries exist
+            controller_keys = [
+                k for k in self.driver.controller.controller_data_for_csv
+                if k.startswith('cost_component_')
+            ]
+
             if not self.live_plotter_sender.headers_sent:
-                headers = ['time', 'Angle', 'Position', 'Q', "ΔQ", 'Target Position', 'AngleD', 'PositionD', ]
-                controller_headers = list(self.driver.controller.controller_data_for_csv.keys())
-                controller_headers = [header[len('cost_component_'):] for header in controller_headers if
-                                      'cost_component_' in header]
-                self.live_plotter_sender.send_headers(headers + controller_headers)
+                headers = [
+                    'time', 'Angle', 'Position', 'Q', 'ΔQ',
+                    'Target Position', 'AngleD', 'PositionD',
+                    'Angle_EKF', 'Position_EKF',
+                    'AngleD_EKF', 'PositionD_EKF'
+                ]
+                # ► controller headers only in the special case
+                if controller_keys:
+                    # strip the 'cost_component_' prefix
+                    controller_headers = [
+                        k[len('cost_component_'):] for k in controller_keys
+                    ]
+                    headers += controller_headers
+
+                self.live_plotter_sender.send_headers(headers)
+
             else:
                 buffer = np.array([
                     self.driver.th.elapsedTime,
@@ -143,13 +159,19 @@ class MainLoggingManager:
                     self.driver.target_position * 100,
                     self.driver.s[ANGLED_IDX],
                     self.driver.s[POSITIOND_IDX] * 100,
-                ])
-                buffer_controller = np.array(
-                    [self.driver.controller.controller_data_for_csv[key] for key in
-                     self.driver.controller.controller_data_for_csv.keys()]
-                )
 
-                buffer = np.append(buffer, buffer_controller)
+                    self.driver.s_ekf[ANGLE_IDX],
+                    self.driver.s_ekf[POSITION_IDX] * 100,
+                    self.driver.s_ekf[ANGLED_IDX],
+                    self.driver.s_ekf[POSITIOND_IDX] * 100
+                ])
+                # ► append controller data only when the same special case holds
+                if controller_keys:
+                    buffer_controller = np.array([
+                        self.driver.controller.controller_data_for_csv[k]
+                        for k in controller_keys
+                    ])
+                    buffer = np.append(buffer, buffer_controller)
 
                 self.live_plotter_sender.send_data(buffer)
 
@@ -160,11 +182,14 @@ class MainLoggingManager:
             combined_keys = list(self.dict_data_to_save_basic.keys()) + list(
                 self.data_to_save_measurement.keys()) + list(self.data_to_save_controller.keys())
 
+            self.driver.CartPoleInstance.dt_controller = CONTROL_PERIOD_MS / 1000
+            self.driver.CartPoleInstance.dt_save = CONTROL_PERIOD_MS / 1000
+
             self.data_manager.start_csv_recording(
                 self.csv_name,
                 combined_keys,
-                create_csv_title(),
-                create_csv_header(),
+                create_csv_title(mode='CPP'),
+                create_csv_header(self.driver.CartPoleInstance, mode='CPP'),
                 PATH_TO_EXPERIMENT_RECORDINGS,
                 mode='online',
                 wait_till_complete=False,
