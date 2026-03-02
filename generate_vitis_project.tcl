@@ -10,6 +10,11 @@ set bsp_name  "cartpole_bsp"
 set symlink_script "$::env(HOME)/physical-cartpole/Firmware/create_symlinks_cartpole.sh"
 
 # --- Workspace ---
+if {[file exists $ws_path]} {
+    # Make reruns idempotent: stale projects in this workspace cause createapp to fail.
+    puts "Removing existing Vitis workspace: $ws_path"
+    file delete -force $ws_path
+}
 file mkdir $ws_path
 setws $ws_path
 
@@ -92,6 +97,11 @@ proc sanitize_path {p} {
 set fsbl_elf [file normalize [sanitize_path $fsbl_elf]]
 set app_elf  [file normalize [sanitize_path $app_elf]]
 set bit_file [file normalize [sanitize_path $raw_bit_path]]
+
+# Fail early with a clear message if the app did not produce an ELF.
+if {![file exists $app_elf]} {
+    error "Missing application ELF: $app_elf. CartPoleFirmware build failed earlier; inspect vitis_output.log for compiler errors."
+}
 
 # --- Make BSP FSBL-ready (xilffs) ---
 # Set the target BSP (most workspaces only have one; the -name is harmless if unsupported)
