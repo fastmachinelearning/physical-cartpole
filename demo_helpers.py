@@ -11,9 +11,13 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 
 def _run_cmd_live(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> None:
@@ -45,6 +49,385 @@ def _resolve_hls4ml_output_dir(repo: Path, hls_output_abs: Path | None = None) -
     if markers:
         return markers[0].parents[4]
     return None
+
+
+def ensure_notebook_repo_context(
+    nb_globals: dict[str, Any],
+    missing_repo_message: str = "Run Step 1.1 first so REPO is defined once for this notebook.",
+    ensure_sys_path: bool = True,
+) -> Path:
+    repo = nb_globals.get("REPO")
+    if repo is None:
+        raise RuntimeError(missing_repo_message)
+
+    repo_path = Path(repo)
+    if ensure_sys_path:
+        repo_str = str(repo_path)
+        if repo_str not in sys.path:
+            sys.path.insert(0, repo_str)
+    return repo_path
+
+
+def resolve_selected_model_name(nb_globals: dict[str, Any], default_net_name: str) -> str:
+    net_info = nb_globals.get("net_info")
+    if net_info is not None and hasattr(net_info, "net_full_name"):
+        return str(net_info.net_full_name)
+    return str(default_net_name)
+
+
+def run_step3_launcher(repo: Path, net_name: str | None) -> None:
+    script = repo / "step3.sh"
+    if not script.exists():
+        raise FileNotFoundError(f"Missing simulator launcher: {script}")
+    script.chmod(script.stat().st_mode | 0o111)
+
+    args = ["bash", str(script)]
+    if net_name:
+        args.append(str(net_name))
+
+    print("Notebook CWD:", Path.cwd().resolve())
+    print("Repo root:", repo)
+    print("Running:", " ".join(args))
+
+    # Run from repo root so relative paths inside step3.sh resolve.
+    subprocess.run(args, cwd=str(repo), check=True)
+
+
+def set_training_experiment_path(cfg_path: Path, active_experiment: Path) -> bool:
+    cfg = yaml.safe_load(cfg_path.read_text())
+
+    def set_experiment_path(cfg_obj: Any, new_path: str) -> bool:
+        if isinstance(cfg_obj, dict):
+            if (
+                "paths" in cfg_obj
+                and isinstance(cfg_obj["paths"], dict)
+                and "path_to_experiment" in cfg_obj["paths"]
+            ):
+                cfg_obj["paths"]["path_to_experiment"] = new_path
+                return True
+            if "PATH_TO_EXPERIMENT" in cfg_obj:
+                cfg_obj["PATH_TO_EXPERIMENT"] = new_path
+                return True
+        return False
+
+    ok = set_experiment_path(cfg, str(active_experiment))
+    if ok:
+        cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False))
+        print("Updated config_training.yml to use:", active_experiment)
+    else:
+        print("Could not locate experiment path key; set it manually to:", active_experiment)
+    return ok
+
+
+def _normalize_vivado_bin(path_value: str | Path) -> Path:
+    p = Path(str(path_value)).expanduser()
+    return p if p.name == "bin" else (p / "bin")
+
+
+def _extract_vivado_version(vivado_exe: Path) -> str:
+    out = subprocess.check_output(
+        [str(vivado_exe), "-version"],
+        text=True,
+        stderr=subprocess.STDOUT,
+        errors="ignore",
+    )
+    for line in out.splitlines():
+        if "Vivado v" in line:
+            return line.strip()
+    return out.splitlines()[0].strip() if out.strip() else "<unknown>"
+
+
+def _resolve_vivado_bin(expected_version: str, cfg_vivado_path: str) -> tuple[Path, str]:
+    candidates: list[Path] = []
+
+    vivado_root = os.environ.get("XILINX_VIVADO", "").strip()
+    if vivado_root:
+        candidates.append(_normalize_vivado_bin(vivado_root))
+
+    if cfg_vivado_path:
+        candidates.append(_normalize_vivado_bin(cfg_vivado_path))
+
+    vivado_on_path = shutil.which("vivado")
+    if vivado_on_path:
+        candidates.append(Path(vivado_on_path).resolve().parent)
+
+    candidates.extend(
+        [
+            Path(f"/tools/Xilinx/Vivado/{expected_version}/bin"),
+            Path(f"/mnt/raid5/fpga/cad/xilinx/Vivado/{expected_version}/bin"),
+            Path(f"/fpga_raid5/cad/xilinx/Vivado/{expected_version}/bin"),
+            Path(f"/mnt/xilinx/Xilinx/Vivado/{expected_version}/bin"),
+        ]
+    )
+
+    checked: list[str] = []
+    seen: set[str] = set()
+    for c in candidates:
+        c = Path(c)
+        key = str(c)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        vivado_exe = c / "vivado"
+        if not vivado_exe.exists():
+            checked.append(f"{c} (missing vivado)")
+            continue
+
+        try:
+            version_line = _extract_vivado_version(vivado_exe)
+        except Exception as exc:
+            checked.append(f"{vivado_exe} (version check failed: {exc})")
+            continue
+
+        checked.append(f"{vivado_exe} -> {version_line}")
+        if f"v{expected_version}" in version_line:
+            return c, version_line
+
+    raise RuntimeError(
+        f"Could not resolve Vivado v{expected_version}. Checked:\n - " + "\n - ".join(checked)
+    )
+
+
+def _resolve_vivado_gcc_bin(vivado_bin: Path) -> Path | None:
+    vivado_root = Path(vivado_bin).parent
+    candidates = [
+        vivado_root / "tps" / "lnx64" / "gcc-6.2.0" / "bin",
+        vivado_root / "tps" / "lnx64" / "gcc-9.3.0" / "bin",
+        vivado_root / "tps" / "lnx64" / "gcc-10.2.0" / "bin",
+        vivado_root / "tps" / "lnx64" / "gcc-11.2.0" / "bin",
+    ]
+    for c in candidates:
+        if (c / "gcc").exists() and (c / "g++").exists():
+            return c
+    return None
+
+
+def _write_cosim_gcc_wrapper(wrapper_dir: Path, real_gcc_bin: Path) -> None:
+    wrapper_dir = Path(wrapper_dir)
+    real_gcc_bin = Path(real_gcc_bin)
+    wrapper_dir.mkdir(parents=True, exist_ok=True)
+
+    script_template = """#!/usr/bin/env bash
+set -euo pipefail
+REAL_COMPILER="__REAL_COMPILER__"
+args=()
+while (($#)); do
+  case "$1" in
+    -I)
+      if [[ $# -ge 2 && "$2" == "/usr/include/x86_64-linux-gnu" ]]; then
+        shift 2
+        continue
+      fi
+      args+=("$1")
+      shift
+      if (($#)); then
+        args+=("$1")
+        shift
+      fi
+      ;;
+    -I/usr/include/x86_64-linux-gnu)
+      shift
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+exec "$REAL_COMPILER" "${args[@]}"
+"""
+
+    for tool in ("gcc", "g++"):
+        wrapper = wrapper_dir / tool
+        wrapper.write_text(script_template.replace("__REAL_COMPILER__", str(real_gcc_bin / tool)))
+        wrapper.chmod(0o755)
+
+
+def prepare_hls_toolchain_context(
+    repo: Path,
+    sim: Path,
+    hls_cfg: dict[str, Any],
+    hls_models_dir: Path,
+    selected_net_name: str,
+    xilinx_tool_version: str = "2020.1",
+) -> dict[str, Any]:
+    run_tag = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    vivado_bin, vivado_version_line = _resolve_vivado_bin(
+        xilinx_tool_version,
+        str(hls_cfg.get("path_to_hls_installation", "")).strip(),
+    )
+
+    os.environ["XILINX_VIVADO"] = str(vivado_bin.parent)
+    os.environ["XILINX_HLS"] = str(vivado_bin.parent)
+    os.environ["PATH"] = f"{vivado_bin}:{os.environ.get('PATH', '')}"
+
+    resolved_gcc_bin = _resolve_vivado_gcc_bin(vivado_bin)
+    if resolved_gcc_bin is not None:
+        # Vivado 2020.1 cosim can pick host GMP headers via /usr include path.
+        # Route cosim gcc/g++ through a wrapper that removes that include so
+        # Vivado's bundled GMP/MPFR headers are used consistently.
+        if xilinx_tool_version == "2020.1":
+            gcc_wrapper_dir = repo / ".cache" / f"vivado_gcc_wrapper_{xilinx_tool_version.replace('.', '_')}"
+            _write_cosim_gcc_wrapper(gcc_wrapper_dir, resolved_gcc_bin)
+            os.environ["AP_GCC_PATH"] = str(gcc_wrapper_dir)
+            os.environ["CARTPOLE_REAL_AP_GCC_PATH"] = str(resolved_gcc_bin)
+        else:
+            os.environ["AP_GCC_PATH"] = str(resolved_gcc_bin)
+            os.environ.pop("CARTPOLE_REAL_AP_GCC_PATH", None)
+
+    if not (hls_models_dir / selected_net_name).exists():
+        raise FileNotFoundError(
+            f"Selected model directory not found: {hls_models_dir / selected_net_name}"
+        )
+
+    hls_output_name = os.environ.get("CARTPOLE_HLS_OUTPUT", f"{selected_net_name}_{run_tag}")
+    hls_output_abs = repo / "HLS4ML" / hls_output_name
+    hls_output_rel = os.path.relpath(hls_output_abs, sim)
+
+    print("Xilinx tool version target:", xilinx_tool_version)
+    print("Resolved Vivado bin:", vivado_bin)
+    print("Resolved Vivado version:", vivado_version_line)
+    print("Resolved AP_GCC_PATH:", os.environ.get("AP_GCC_PATH", "<unset>"))
+    if os.environ.get("CARTPOLE_REAL_AP_GCC_PATH"):
+        print("Resolved real GCC bin:", os.environ["CARTPOLE_REAL_AP_GCC_PATH"])
+    print("Resolved model dir:", hls_models_dir / selected_net_name)
+    print("Resolved output dir:", hls_output_abs)
+    print("Resolved output rel:", hls_output_rel)
+
+    return {
+        "run_tag": run_tag,
+        "xilinx_tool_version": xilinx_tool_version,
+        "vivado_bin": vivado_bin,
+        "vivado_version_line": vivado_version_line,
+        "hls_output_name": hls_output_name,
+        "hls_output_abs": hls_output_abs,
+        "hls_output_rel": hls_output_rel,
+    }
+
+
+def update_hls_config_with_backup(
+    hls_config: Path,
+    hls_cfg: dict[str, Any],
+    vivado_bin: Path,
+    hls_models_dir: Path,
+    sim: Path,
+    selected_net_name: str,
+    hls_output_rel: str,
+    run_tag: str,
+) -> Path:
+    backup_path = hls_config.with_suffix(f".yml.bak_{run_tag}")
+    shutil.copy2(hls_config, backup_path)
+
+    hls_cfg["path_to_hls_installation"] = str(vivado_bin)
+    hls_cfg["path_to_models"] = os.path.relpath(hls_models_dir, sim)
+    hls_cfg["net_name"] = selected_net_name
+    hls_cfg["output_dir"] = hls_output_rel
+
+    with hls_config.open("w") as f:
+        yaml.safe_dump(hls_cfg, f, sort_keys=False)
+
+    print("Backup created:", backup_path)
+    print("Updated config:", hls_config)
+    return backup_path
+
+
+def patch_controller_name(repo: Path, apply_controller_patch: bool = True) -> None:
+    globals_py = repo / "Driver" / "globals.py"
+    text = globals_py.read_text()
+    match = re.search(r'^CONTROLLER_NAME\s*=\s*[\'"]([^\'"]+)[\'"]', text, flags=re.M)
+
+    print("globals.py:", globals_py)
+    print("Current CONTROLLER_NAME:", match.group(1) if match else "not found")
+
+    new_text, count = re.subn(
+        r'^CONTROLLER_NAME\s*=\s*[\'"][^\'"]+[\'"]',
+        "CONTROLLER_NAME = 'neural-imitator'",
+        text,
+        count=1,
+        flags=re.M,
+    )
+    if count != 1:
+        raise RuntimeError("Could not patch CONTROLLER_NAME in globals.py")
+
+    if apply_controller_patch:
+        globals_py.write_text(new_text)
+        print("Patched CONTROLLER_NAME -> neural-imitator")
+    else:
+        print("Dry run only. Set APPLY_CONTROLLER_PATCH=True to write.")
+
+
+def patch_manual_serial_override(
+    repo: Path,
+    serial_port_override: str = "/dev/tty.usbserial-210351B7BD461",
+    apply_serial_patch: bool = True,
+) -> None:
+    interface_py = repo / "Driver" / "DriverFunctions" / "interface.py"
+    text = interface_py.read_text()
+
+    print("interface.py:", interface_py)
+
+    if "MANUAL_SERIAL_PORT =" not in text:
+        text = text.replace(
+            "import pandas as pd\n",
+            "import pandas as pd\n\nMANUAL_SERIAL_PORT = None  # e.g. '/dev/tty.usbserial-XXXX'\n",
+            1,
+        )
+
+    if "Using manual serial port override" not in text:
+        marker = "    from serial.tools import list_ports\n"
+        text = text.replace(
+            marker,
+            "    if MANUAL_SERIAL_PORT:\n"
+            "        print(f'Using manual serial port override: {MANUAL_SERIAL_PORT}')\n"
+            "        return MANUAL_SERIAL_PORT\n\n" + marker,
+            1,
+        )
+
+    text, n = re.subn(
+        r"^MANUAL_SERIAL_PORT\s*=.*$",
+        f"MANUAL_SERIAL_PORT = {serial_port_override!r}",
+        text,
+        count=1,
+        flags=re.M,
+    )
+    if n != 1:
+        raise RuntimeError("Could not set MANUAL_SERIAL_PORT")
+
+    if apply_serial_patch:
+        interface_py.write_text(text)
+        print("Patched manual serial-port override")
+    else:
+        print("Dry run only. Set APPLY_SERIAL_PATCH=True to write.")
+
+
+def patch_model_config(
+    repo: Path,
+    net_name: str = "Dense-7IN-32H1-32H2-1OUT-0",
+    path_to_models: str = "./CartPoleSimulation/SI_Toolkit_ASF/Experiments/Experiment-1/Models/",
+    apply_model_config_patch: bool = True,
+) -> None:
+    controllers_yml = repo / "Driver" / "CartPoleSimulation" / "Control_Toolkit_ASF" / "config_controllers.yml"
+    cfg = yaml.safe_load(controllers_yml.read_text())
+    ni = cfg.setdefault("neural-imitator", {})
+
+    print("config_controllers.yml:", controllers_yml)
+    print("Current PATH_TO_MODELS:", ni.get("PATH_TO_MODELS"))
+    print("Current net_name:", ni.get("net_name"))
+    print("Current input_precision:", ni.get("input_precision"))
+    print("Current hls4ml:", ni.get("hls4ml"))
+
+    ni["PATH_TO_MODELS"] = path_to_models
+    ni["net_name"] = net_name
+    ni["input_precision"] = "float"
+    ni["hls4ml"] = False
+
+    if apply_model_config_patch:
+        controllers_yml.write_text(yaml.safe_dump(cfg, sort_keys=False))
+        print("Patched neural-imitator model configuration")
+    else:
+        print("Dry run only. Set APPLY_MODEL_CONFIG_PATCH=True to write.")
 
 
 def set_automation_scripts_executable(repo: Path) -> None:
