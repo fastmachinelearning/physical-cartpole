@@ -10,7 +10,7 @@ set -euo pipefail
 
 ### --- USER SETTINGS (edit if your install paths differ) ---
 VITIS_ROOT="${VITIS_ROOT:-/mnt/xilinx/Xilinx/Vitis/2020.1}"    # Path to your Vitis 2020.1
-TCL="${TCL:-generate_vitis_project.tcl}"                        # Your TCL file (unchanged)
+TCL="${TCL:-tcl/generate_vitis_project.tcl}"                    # Default TCL path in this repo layout
 LOG="${LOG:-vitis_output.log}"                                  # Where to write xsct output
 DISPLAY_NUM="${DISPLAY_NUM:-99}"                                # Xvfb display number
 
